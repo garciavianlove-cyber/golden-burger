@@ -86,7 +86,14 @@ const menu=[
 ];
 
 const cond=['Ketchup','Mayonesa','Mostaza','BBQ','Picante','Sin condimentos'];
-let cart=[],cur=null,n=1,cs=['Ketchup'],sv='Comer aquí',pay='Efectivo';
+const options={
+ 'Limonada':['Limonada con soda','Limonada con naranjada'],
+ 'Naranjada':['Naranjada con soda','Naranjada con limonada'],
+ 'Coca-Cola':['Coca-Cola Cero','Pepsi','Mountain Dew','Té frío'],
+ 'Milkshake':['Leche entera','Leche descremada'],
+ 'Brownie':['Pastel de 3 leches','Pie de queso','Pastel de almendras']
+};
+let cart=[],cur=null,n=1,cs=['Ketchup'],sv='Comer aquí',pay='Efectivo',extras=[];
 const money=x=>'Q'+x.toFixed(2);
 
 function showMenu(){
@@ -104,10 +111,22 @@ function render(c='Todos'){
 }
 function filter(c,b){document.querySelectorAll('.cat').forEach(x=>x.classList.remove('active'));b.classList.add('active');render(c)}
 function openP(i){
- cur=menu[i];n=1;cs=['Ketchup'];sv='Comer aquí';
+ cur=menu[i];n=1;cs=['Ketchup'];sv='Comer aquí';extras=[];
  pt.textContent=cur[0];pd.textContent=cur[4];qn.textContent=n;pp.textContent=money(cur[2]);
- conds.innerHTML=cond.map(c=>'<button class="choice '+(cs.includes(c)?'sel':'')+'" onclick="toggle(this)">'+c+'</button>').join('');
+ const opts=options[cur[0]];
+ if(opts){
+   conds.previousElementSibling.textContent='Opciones';
+   conds.innerHTML=opts.map(c=>'<button class="choice" onclick="toggleExtra(this)">'+c+'</button>').join('');
+ }else{
+   conds.previousElementSibling.textContent='Condimentos';
+   conds.innerHTML=cond.map(c=>'<button class="choice '+(cs.includes(c)?'sel':'')+'" onclick="toggle(this)">'+c+'</button>').join('');
+ }
  product.classList.add('show');
+}
+function toggleExtra(b){
+ let c=b.textContent;
+ extras=extras.includes(c)?extras.filter(x=>x!==c):[...extras,c];
+ b.classList.toggle('sel',extras.includes(c));
 }
 function toggle(b){
  let c=b.textContent;
@@ -117,11 +136,11 @@ function toggle(b){
 }
 function service(b,s){sv=s;document.querySelectorAll('#product [onclick^="service"]').forEach(x=>x.classList.remove('sel'));b.classList.add('sel')}
 function qty(x){n=Math.max(1,n+x);qn.textContent=n}
-function add(){cart.push({p:cur,q:n,c:[...cs],s:sv});closeM('product');update();openCart()}
+function add(){cart.push({p:cur,q:n,c:[...cs],o:[...extras],s:sv});closeM('product');update();openCart()}
 function update(){
  count.textContent=cart.reduce((a,x)=>a+x.q,0);
  if(!cart.length){list.innerHTML='<p style="color:#aaa;text-align:center">Tu pedido está vacío 🍔</p>';total.textContent='Q0.00';checkout.innerHTML='';return}
- list.innerHTML=cart.map((x,i)=>'<div class="cartitem"><div><b>'+x.q+' × '+x.p[0]+'</b><small style="display:block;color:#aaa">'+x.s+' · '+x.c.join(', ')+'</small></div><button onclick="removeI('+i+')" style="background:none;color:#f66;border:0;cursor:pointer">Eliminar</button></div>').join('');
+ list.innerHTML=cart.map((x,i)=>'<div class="cartitem"><div><b>'+x.q+' × '+x.p[0]+'</b><small style="display:block;color:#aaa">'+x.s+' · '+x.c.join(', ')+(x.o?.length?' · '+x.o.join(', '):'')+'</small></div><button onclick="removeI('+i+')" style="background:none;color:#f66;border:0;cursor:pointer">Eliminar</button></div>').join('');
  let t=cart.reduce((a,x)=>a+x.p[2]*x.q,0);total.textContent=money(t);
  checkout.innerHTML='<label>Nombre</label><input id="name" placeholder="Tu nombre"><b>Forma de pago</b><div class="pay"><button class="sel" onclick="setPay(this,\'Efectivo\')">💵 Efectivo</button><button onclick="setPay(this,\'Tarjeta\')">💳 Tarjeta</button><button onclick="setPay(this,\'Transferencia\')">📲 Transferencia</button></div><div class="notice">🔒 Pago seguro en el mostrador. Esta página es una demostración y no procesa datos bancarios.</div><button class="btn" style="width:100%;margin-top:15px" onclick="confirmOrder()">✅ Confirmar y pagar</button>';
 }
